@@ -1,1 +1,0 @@
-python train.py --epochs 100 --batch 256 --lr 0.001 --noise 0.1 --mtl --noise 

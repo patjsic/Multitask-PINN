@@ -5,25 +5,8 @@ import torch
 from torch.utils.data import Dataset
 
 """
-Data code mostly taken and adapted from: https://github.com/chen-yingfa/pinn-torch/blob/master/data.py.
+Data loading code mostly taken and adapted from: https://github.com/chen-yingfa/pinn-torch/blob/master/data.py.
 """
-
-# class MTLDataset(Dataset):
-#     """
-#     Dataset that only returns the data of a specifc task (i.e., only data or collocation)
-#     """
-#     def __init__(self, data, collocation=False):
-#         self.data = data
-#         self.collocation = collocation
-#         self.examples = torch.tensor(data, dtype=torch.float32, requires_grad=True)
-    
-#     def __len__(self):
-#         return len(self.data)
-    
-#     def __getitem__(self, idx):
-#         if self.collocation:
-#             headers = ["t", "x", "y",]
-
 
 class PINNDataset(Dataset):
     def __init__(self, data):
