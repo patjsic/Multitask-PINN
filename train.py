@@ -39,6 +39,7 @@ def train(epochs=30, hidden_size=32, batch_size=1024, lr=1e-3, device="auto", mt
 
     model.train()
     losses = []
+    val_losses = []
     for epoch in tqdm(range(epochs)):
         optimizer.zero_grad()
 
@@ -60,12 +61,31 @@ def train(epochs=30, hidden_size=32, batch_size=1024, lr=1e-3, device="auto", mt
             writer.add_scalar("Loss/train", loss, epoch)
             writer.add_scalar("Pde_loss/train", model.pde_loss_val, epoch)
             writer.add_scalar("Data_loss/train", model.data_loss_val, epoch)
+        
+        #TODO: Implement validation loss tracking
+        with torch.no_grad():
+            for idx, s in enumerate(test_dataloader):
+                #Get components
+                x = s["x"]
+                y = s["y"]
+                t = s["t"]
+                p = s["p"]
+                u = s["u"]
+                v = s["v"]
 
+                #Make forward pass and backprop
+                pred = model.forward(x, y, t, p, u, v)
+                val_loss = model.compute_loss(u, v, pred["u_pred"], pred["v_pred"], pred["f"], pred["g"])
+                val_losses.append(loss.item())
+                writer.add_scalar("Loss/validation", val_loss, epoch)
+                writer.add_scalar("Pde_loss/validation", model.pde_loss_val, epoch)
+                writer.add_scalar("Data_loss/validation", model.data_loss_val, epoch)
+        
         if epoch % 5 == 0:
             print(f"Epoch {epoch}, loss {loss}")
             
     writer.flush()
-    return None
+    return model
 
 
 if __name__ == "__main__":
@@ -74,8 +94,8 @@ if __name__ == "__main__":
     parser.add_argument("--hidden", dest="hidden", type=int, default=32, help="size of hidden layers, default is 32")
     parser.add_argument("--batch", dest="batch", type=int, default=1024, help="number of examples per batch, default is 1024")
     parser.add_argument("--lr", dest="lr", type=float, default=1e-3, help="learning rate, default is 0.001")
-    parser.add_argument("--device", dest="device", type=str, default="auto", choice=["auto", "cpu", "cuda"], help="training device")
-    parser.add_argument("--mtl", dest="mtl", type=bool, default=True, action="store_true", help="if true, train MTL model else train vanilla PINN")
+    parser.add_argument("--device", dest="device", type=str, default="auto", choices=["auto", "cpu", "cuda"], help="training device")
+    parser.add_argument("--mtl", dest="mtl", action="store_true", help="if true, train MTL model else train vanilla PINN")
     parser.add_argument("--noise", dest="noise", type=float, default=0.1, help="amount of noise in data for u and v")
     args = parser.parse_args()
     train(epochs=args.epochs, hidden_size=args.hidden, batch_size=args.batch, lr=args.lr, device=args.device, mtl=args.mtl, noise=args.noise)
